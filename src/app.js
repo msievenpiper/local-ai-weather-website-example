@@ -627,6 +627,9 @@
     elements.visibility.textContent = (current.vis_km || 0).toFixed(1);
     elements.pressure.textContent = Math.round(current.pressure_mb || 0);
     elements.chanceOfRain.textContent = today.day.daily_chance_of_rain + '%';
+    
+    // Update wind direction indicator
+    updateWindDirectionIndicator(current.wind_dir, current.wind_kph);
 
     // Update weather alerts
     updateWeatherAlerts(today);
@@ -672,6 +675,43 @@
     
     // Store current gradient for theme toggling
     state.currentGradient = gradient;
+  }
+
+  // Update wind direction indicator
+  function updateWindDirectionIndicator(windDir, windSpeed) {
+    const arrow = document.getElementById('windDirectionArrow');
+    const text = document.getElementById('windDirectionText');
+    
+    if (!arrow || !text) return;
+    
+    // Set wind direction text
+    text.textContent = windDir;
+    
+    // Calculate rotation angle for arrow
+    const degrees = {
+      'N': 0, 'NNE': 22.5, 'NE': 45, 'ENE': 67.5,
+      'E': 90, 'ESE': 112.5, 'SE': 135, 'SSE': 157.5,
+      'S': 180, 'SSW': 202.5, 'SW': 225, 'WSW': 247.5,
+      'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5
+    };
+    
+    const angle = degrees[windDir] || 0;
+    arrow.style.transform = `rotate(${angle}deg)`;
+    
+    // Color code based on wind speed
+    let color;
+    if (windSpeed > 50) {
+      color = 'bg-red-400'; // High wind
+    } else if (windSpeed > 30) {
+      color = 'bg-orange-400'; // Medium wind
+    } else if (windSpeed > 15) {
+      color = 'bg-yellow-400'; // Light wind
+    } else {
+      color = 'bg-blue-400'; // Calm wind
+    }
+    
+    arrow.classList.remove('bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-blue-400');
+    arrow.classList.add(color);
   }
 
   // Toggle dark mode
