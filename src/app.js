@@ -63,6 +63,12 @@
     searchResults: document.getElementById('searchResults'),
     themeToggle: document.getElementById('themeToggle'),
     
+    // Modal elements
+    dailyDetailModal: document.getElementById('dailyDetailModal'),
+    dailyDetailBackdrop: document.getElementById('dailyDetailBackdrop'),
+    closeDailyDetail: document.getElementById('closeDailyDetail'),
+    dailyDetailContent: document.getElementById('dailyDetailContent'),
+    
     // Weather display elements
     currentTemp: document.getElementById('currentTemp'),
     weatherCondition: document.getElementById('weatherCondition'),
@@ -212,6 +218,15 @@
 
     // Theme toggle
     elements.themeToggle.addEventListener('click', toggleTheme);
+    
+    // Daily detail modal
+    if (elements.dailyDetailBackdrop) {
+      elements.dailyDetailBackdrop.addEventListener('click', closeDailyDetail);
+    }
+    
+    if (elements.closeDailyDetail) {
+      elements.closeDailyDetail.addEventListener('click', closeDailyDetail);
+    }
 
     // View full buttons (placeholders for future functionality)
     elements.viewHourlyFull.addEventListener('click', () => {
@@ -848,7 +863,9 @@
       const isToday = index === 1; // Highlight tomorrow
 
       const dayItem = document.createElement('div');
-      dayItem.className = `flex flex-col sm:flex-row justify-between items-center p-4 hover:bg-white/5 rounded-xl transition-all duration-300 ${isToday ? 'bg-gradient-to-r from-white/20 to-white/10 border-l-4 border-blue-300' : ''}`;
+      dayItem.className = `flex flex-col sm:flex-row justify-between items-center p-4 hover:bg-white/5 rounded-xl transition-all duration-300 cursor-pointer ${isToday ? 'bg-gradient-to-r from-white/20 to-white/10 border-l-4 border-blue-300 hover:scale-[1.02]' : 'hover:scale-[1.01]'}`;
+      dayItem.setAttribute('role', 'button');
+      dayItem.setAttribute('aria-label', `View detailed forecast for ${dayFull}`);
       dayItem.innerHTML = `
         <div class="flex items-center space-x-3 mb-2 sm:mb-0">
           <span class="text-gray-800 dark:text-white font-bold w-16">${dayName}</span>
@@ -866,6 +883,11 @@
           </div>
         </div>
       `;
+      
+      // Add click handler for daily detail modal
+      dayItem.addEventListener('click', () => {
+        openDailyDetail(day, index);
+      });
       
       elements.dailyForecast.appendChild(dayItem);
     });
@@ -908,11 +930,90 @@
     });
   }
 
+  // Daily detail modal functions
+  function openDailyDetail(day, index) {
+    if (!day || !elements.dailyDetailModal) return;
+    
+    const dayName = new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    
+    elements.dailyDetailContent.innerHTML = `
+      <div class="flex items-center space-x-4 mb-6">
+        <div class="text-center">
+          <p class="text-sm text-gray-500 dark:text-gray-400">${dayName}</p>
+          <div class="mt-2 flex items-center justify-center space-x-2">
+            ${getDailyWeatherIcon(day.day.condition.code)}
+            <span class="text-gray-700 dark:text-gray-200 font-medium">${day.day.condition.text}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="glass-card border rounded-xl p-4">
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Max Temperature</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">${CONFIG.units.temp === 'f' ? Math.round(day.day.maxtemp_f) : Math.round(day.day.maxtemp_c)}°${CONFIG.units.temp.toUpperCase()}</p>
+        </div>
+        <div class="glass-card border rounded-xl p-4">
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Min Temperature</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">${CONFIG.units.temp === 'f' ? Math.round(day.day.mintemp_f) : Math.round(day.day.mintemp_c)}°${CONFIG.units.temp.toUpperCase()}</p>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4">
+        <div class="glass-card border rounded-xl p-4">
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Total Precipitation</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">${day.day.totalprecip_mm.toFixed(1)}mm (${Math.round(day.day.daily_chance_of_rain)}%)</p>
+        </div>
+        <div class="glass-card border rounded-xl p-4">
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Average Humidity</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">${Math.round(day.day.avghumidity)}%</p>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 mt-4">
+        <div class="glass-card border rounded-xl p-4">
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">Wind Speed</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">${Math.round(day.day.maxwind_kph)} km/h</p>
+        </div>
+        <div class="glass-card border rounded-xl p-4">
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-1">UV Index</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">${day.day.uv}</p>
+        </div>
+      </div>
+      
+      <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">Sunrise & Sunset</p>
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span class="font-medium">Sunrise: ${day.astros.sunrise}</span>
+          </div>
+          <div class="flex items-center space-x-2 text-gray-700 dark:text-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-medium">Sunset: ${day.astros.sunset}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    elements.dailyDetailModal.classList.remove('hidden');
+  }
+
+  function closeDailyDetail() {
+    if (elements.dailyDetailModal) {
+      elements.dailyDetailModal.classList.add('hidden');
+    }
+  }
+
   // Expose public methods
   window.WeatherApp = {
     init: init,
     fetchWeatherByCity: fetchWeatherByCity,
-    toggleTheme: toggleTheme
+    toggleTheme: toggleTheme,
+    openDailyDetail: openDailyDetail
   };
 
   // Cache utility functions

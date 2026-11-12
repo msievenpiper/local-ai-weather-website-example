@@ -196,6 +196,24 @@
         </div>
       </div>
       
+      <!-- Daily Detail Modal -->
+      <div id="dailyDetailModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="dailyDetailTitle">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" id="dailyDetailBackdrop"></div>
+        <div class="glass-card rounded-3xl p-6 w-full max-w-md z-10 animate-scale-in shadow-2xl overflow-hidden" role="document">
+          <div class="flex justify-between items-start mb-6">
+            <h3 id="dailyDetailTitle" class="text-xl font-bold text-gray-900 dark:text-white">Daily Forecast</h3>
+            <button id="closeDailyDetail" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" aria-label="Close daily detail modal">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div id="dailyDetailContent" class="space-y-4">
+            <!-- Daily detail content will be populated here -->
+          </div>
+        </div>
+      </div>
+      
       <!-- Recent Searches -->
       <div id="recentSearches" class="glass-card border rounded-3xl p-6 animate-on-scroll mt-4 hidden" role="region" aria-label="Recent searches">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Recent Searches</h3>
