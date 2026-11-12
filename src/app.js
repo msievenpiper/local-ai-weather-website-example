@@ -628,6 +628,9 @@
     elements.pressure.textContent = Math.round(current.pressure_mb || 0);
     elements.chanceOfRain.textContent = today.day.daily_chance_of_rain + '%';
 
+    // Update weather alerts
+    updateWeatherAlerts(today);
+
     // Update hourly forecast
     renderHourlyForecast(current, today);
 
@@ -1006,6 +1009,94 @@
     if (elements.dailyDetailModal) {
       elements.dailyDetailModal.classList.add('hidden');
     }
+  }
+
+  // Weather alerts function
+  function updateWeatherAlerts(today) {
+    const container = document.getElementById('alertsList');
+    const section = document.getElementById('weatherAlerts');
+    
+    if (!container || !section) return;
+    
+    // Check for high risk conditions
+    const alerts = [];
+    
+    if (today.day.daily_chance_of_rain > 60) {
+      alerts.push({
+        type: 'rain',
+        title: 'Heavy Rain Expected',
+        description: `There's a ${today.day.daily_chance_of_rain}% chance of heavy rain today. Bring an umbrella!`,
+        severity: 'medium'
+      });
+    }
+    
+    if (today.day.maxtemp_c > 30) {
+      alerts.push({
+        type: 'heat',
+        title: 'Hot Weather',
+        description: `High temperatures expected - ${Math.round(today.day.maxtemp_c)}°C. Stay hydrated!`,
+        severity: 'high'
+      });
+    }
+    
+    if (today.day.mintemp_c < 0) {
+      alerts.push({
+        type: 'cold',
+        title: 'Freezing Temperatures',
+        description: `Cold conditions expected - low of ${Math.round(today.day.mintemp_c)}°C. Dress warmly!`,
+        severity: 'high'
+      });
+    }
+    
+    if (today.day.maxwind_kph > 40) {
+      alerts.push({
+        type: 'wind',
+        title: 'Strong Winds',
+        description: `High winds expected - up to ${Math.round(today.day.maxwind_kph)} km/h. Be cautious!`,
+        severity: 'medium'
+      });
+    }
+    
+    if (alerts.length === 0) {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    container.innerHTML = '';
+    section.classList.remove('hidden');
+    
+    alerts.forEach(alert => {
+      const alertItem = document.createElement('div');
+      let bgColor, iconColor;
+      
+      switch(alert.severity) {
+        case 'high':
+          bgColor = 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500';
+          iconColor = 'text-red-500';
+          break;
+        case 'medium':
+          bgColor = 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500';
+          iconColor = 'text-yellow-500';
+          break;
+        default:
+          bgColor = 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500';
+          iconColor = 'text-blue-500';
+      }
+      
+      alertItem.className = `p-4 ${bgColor} rounded-xl mb-2`;
+      alertItem.innerHTML = `
+        <div class="flex items-start space-x-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${iconColor} flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-1">${alert.title}</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">${alert.description}</p>
+          </div>
+        </div>
+      `;
+      container.appendChild(alertItem);
+    });
   }
 
   // Expose public methods

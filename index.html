@@ -307,6 +307,19 @@
             </div>
           </div>
           
+          <!-- Weather Alerts -->
+          <div id="weatherAlerts" class="glass-card border rounded-3xl p-6 animate-slide-in-right hidden">
+            <div class="flex items-center space-x-3 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#FF3B30] animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Weather Alerts</h3>
+            </div>
+            <div id="alertsList" class="space-y-2">
+              <!-- Alerts will be populated here -->
+            </div>
+          </div>
+          
           <!-- Weather Details Grid -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-slide-in-right" style="animation-delay: 0.4s">
             <div class="glass-card border rounded-3xl p-5">
