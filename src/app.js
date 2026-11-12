@@ -74,6 +74,8 @@ const isTestEnvironment = typeof jest !== 'undefined';
     
     // Weather display elements
     currentTemp: document.getElementById('currentTemp'),
+    dewPoint: document.getElementById('dewPoint'),
+    dewPointLevel: document.getElementById('dewPointLevel'),
     weatherCondition: document.getElementById('weatherCondition'),
     locationName: document.getElementById('locationName'),
     currentLocationText: document.getElementById('currentLocation'),
@@ -664,8 +666,58 @@ const isTestEnvironment = typeof jest !== 'undefined';
 
     // Update daily forecast
     renderDailyForecast(forecast);
+    
+    // Update dew point
+    updateDewPoint(current);
+  }
 
-    // Apply animations using motion.js
+  // Dew point calculation and display
+  function updateDewPoint(current) {
+    if (!current || !elements.dewPoint) return;
+    
+    const temp = current.temp_c;
+    const humidity = current.humidity;
+    
+    // Calculate dew point using the approximation formula
+    const dewPointC = temp - ((100 - humidity) / 5);
+    
+    // Display dew point
+    const displayTemp = CONFIG.units.temp === 'f'
+      ? Math.round((dewPointC * 9/5) + 32)
+      : Math.round(dewPointC);
+    const unit = CONFIG.units.temp.toUpperCase();
+    
+    elements.dewPoint.textContent = `${displayTemp}°${unit}`;
+    
+    // Determine comfort level
+    const dewPointF = (dewPointC * 9/5) + 32;
+    let level, colorClass;
+    
+    if (dewPointF < 50) {
+      level = 'Dry';
+      colorClass = 'text-green-600 dark:text-green-400';
+    } else if (dewPointF < 55) {
+      level = 'Comfortable';
+      colorClass = 'text-green-600 dark:text-green-400';
+    } else if (dewPointF < 60) {
+      level = 'Somewhat Humid';
+      colorClass = 'text-yellow-600 dark:text-yellow-400';
+    } else if (dewPointF < 65) {
+      level = 'Humid';
+      colorClass = 'text-orange-600 dark:text-orange-400';
+    } else if (dewPointF < 70) {
+      level = 'Very Humid';
+      colorClass = 'text-orange-600 dark:text-orange-400';
+    } else {
+      level = 'Oppressive';
+      colorClass = 'text-red-600 dark:text-red-400';
+    }
+    
+    elements.dewPointLevel.textContent = level;
+    elements.dewPointLevel.className = `text-gray-900 dark:text-white font-semibold ${colorClass}`;
+  }
+
+  // Apply animations using motion.js
     animateContent();
 
     // Update loading state
@@ -1071,6 +1123,9 @@ const isTestEnvironment = typeof jest !== 'undefined';
     
     // Weather alerts
     updateWeatherAlerts: updateWeatherAlerts,
+    
+    // Dew point
+    updateDewPoint: updateDewPoint,
     
     // Local time
     initLocalTime: initLocalTime,
