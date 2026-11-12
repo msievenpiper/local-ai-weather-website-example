@@ -1111,12 +1111,51 @@
   }
 
   // Expose public methods
-  window.WeatherApp = {
+  const exposedFunctions = {
     init: init,
     fetchWeatherByCity: fetchWeatherByCity,
     toggleTheme: toggleTheme,
-    openDailyDetail: openDailyDetail
+    openDailyDetail: openDailyDetail,
+    
+    // Unit conversion
+    celsiusToFahrenheit: celsiusToFahrenheit,
+    formatTime: formatTime,
+    formatDate: formatDate,
+    
+    // Search history
+    addToSearchHistory: addToSearchHistory,
+    loadSearchHistory: loadSearchHistory,
+    
+    // Temperature
+    toggleTemperatureUnit: toggleTemperatureUnit,
+    
+    // Dark mode
+    enableDarkMode: enableDarkMode,
+    disableDarkMode: disableDarkMode,
+    
+    // Background
+    setDynamicBackground: setDynamicBackground,
+    
+    // Weather alerts
+    updateWeatherAlerts: updateWeatherAlerts,
+    
+    // Notification helpers
+    showError: showError,
+    showSuccess: showSuccess,
+    
+    // Cache utility
+    getFromCache: getFromCache,
+    setInCache: setInCache,
   };
+  
+  window.WeatherApp = {
+    ...exposedFunctions,
+  };
+  
+  // Export for testing (Node.js environment)
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = exposedFunctions;
+  }
 
   // Cache utility functions
   function getFromCache(key) {
