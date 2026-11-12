@@ -205,17 +205,17 @@
       </div>
       
       <!-- Main Weather Display -->
-      <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-on-scroll" style="animation-delay: 0.1s">
+      <main class="grid grid-cols-1 lg:grid-cols-3 gap-6" role="main" aria-label="Weather forecast">
         
         <!-- Current Weather Card -->
         <div class="lg:col-span-1 space-y-6">
-          <div class="glass-card border rounded-3xl p-8 text-center relative overflow-hidden">
-            <div id="weatherConditionIcon" class="mx-auto mb-4 animate-on-scroll"></div>
-            <h2 id="currentTemp" class="text-8xl md:text-9xl font-bold text-white mb-2 tracking-tighter">--°</h2>
-            <p id="weatherCondition" class="text-xl md:text-2xl text-white/90 capitalize">--</p>
-            <p id="locationName" class="text-lg text-white/70 mt-2">--</p>
+          <div class="glass-card border rounded-3xl p-8 text-center relative overflow-hidden animate-scale-in">
+            <div id="weatherConditionIcon" class="mx-auto mb-4"></div>
+            <h2 id="currentTemp" class="text-8xl md:text-9xl font-bold text-white mb-2 tracking-tighter animate-slide-up">--°</h2>
+            <p id="weatherCondition" class="text-xl md:text-2xl text-white/90 capitalize animate-fade-in-up" style="animation-delay: 0.2s">--</p>
+            <p id="locationName" class="text-lg text-white/70 mt-2 animate-fade-in-down" style="animation-delay: 0.3s">--</p>
             
-            <div class="mt-6 grid grid-cols-2 gap-4">
+            <div class="mt-6 grid grid-cols-2 gap-4 animate-fade-in-up" style="animation-delay: 0.4s">
               <div class="glass-card rounded-xl p-3">
                 <p class="text-white/60 text-sm">Feels Like</p>
                 <p id="feelsLike" class="text-white text-xl font-semibold">--°</p>
@@ -236,7 +236,7 @@
           </div>
           
           <!-- Sunrise/Sunset Card -->
-          <div class="glass-card border rounded-3xl p-6 animate-on-scroll" style="animation-delay: 0.1s">
+          <div class="glass-card border rounded-3xl p-6 animate-slide-in-left" style="animation-delay: 0.2s">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Daylight</h3>
             <div class="space-y-4">
               <div class="flex justify-between items-center">
@@ -264,7 +264,7 @@
         <!-- Hourly Forecast -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Hourly Forecast -->
-          <div class="glass-card border rounded-3xl p-6 animate-on-scroll" style="animation-delay: 0.2s">
+          <div class="glass-card border rounded-3xl p-6 animate-slide-in-right" style="animation-delay: 0.2s">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Hourly Forecast</h3>
               <button id="viewHourlyFull" class="text-[#007AFF] hover:text-blue-600 text-sm font-medium">
@@ -277,7 +277,7 @@
           </div>
           
           <!-- 7-Day Forecast -->
-          <div class="glass-card border rounded-3xl p-6 animate-on-scroll" style="animation-delay: 0.3s">
+          <div class="glass-card border rounded-3xl p-6 animate-slide-in-left" style="animation-delay: 0.3s">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-gray-800 dark:text-white">7-Day Forecast</h3>
               <button id="viewDailyFull" class="text-[#007AFF] hover:text-blue-600 text-sm font-medium">
@@ -290,7 +290,7 @@
           </div>
           
           <!-- Weather Details Grid -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-on-scroll" style="animation-delay: 0.4s">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-slide-in-right" style="animation-delay: 0.4s">
             <div class="glass-card border rounded-3xl p-5">
               <div class="flex items-center space-x-2 mb-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#34C759]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
