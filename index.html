@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Weather</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#007AFF">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="dist/style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --primary-color: #007AFF;
+      --weather-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      background: #f5f5f7;
+    }
+    
+    .weather-gradient {
+      background-image: var(--weather-gradient);
+    }
+    
+    /*Motion.js custom animations*/
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    .slide-in {
+      animation: slideIn 0.5s ease-out forwards;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(-20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideInFromBottom {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .slide-in-bottom {
+      animation: slideInFromBottom 0.5s ease-out forwards;
+    }
+    
+    /* Loading spinner */
+    .loader {
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top: 3px solid white;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Weather icons */
+    .weather-icon {
+      width: 120px;
+      height: 120px;
+    }
+    
+    /* Glass cards */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .glass-card.border {
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Search dropdown */
+    .search-dropdown {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .search-dropdown::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .search-dropdown::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="weather-gradient min-h-screen flex items-center justify-center p-4 md:p-6">
+  
+  <!-- Main Container -->
+  <div id="app" class="w-full max-w-6xl mx-auto">
+    
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="flex flex-col items-center justify-center min-h-screen">
+      <div class="loader w-12 h-12 mb-4"></div>
+      <p class="text-white text-lg font-medium opacity-90">Loading weather data...</p>
+    </div>
+    
+    <!-- Content Container -->
+    <div id="contentContainer" class="hidden">
+      
+      <!-- Header -->
+      <header class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 animate-on-scroll">
+        <div class="flex items-center space-x-4">
+          <button id="locationBtn" class="glass-card border rounded-full p-3 hover:bg-white/20 transition-colors" aria-label="Use my location">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-2xl md:text-3xl font-semibold text-white">Weather</h1>
+            <p id="currentLocation" class="text-white/80 text-sm md:text-base">Locating...</p>
+          </div>
+        </div>
+        
+        <div class="mt-4 md:mt-0 flex items-center space-x-3">
+          <button id="searchBtn" class="glass-card border rounded-full p-3 hover:bg-white/20 transition-colors" aria-label="Search location">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+          <button id="themeToggle" class="glass-card border rounded-full p-3 hover:bg-white/20 transition-colors" aria-label="Toggle theme">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+      
+      <!-- Search Modal -->
+      <div id="searchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="searchBackdrop"></div>
+        <div class="glass-card rounded-3xl p-6 w-full max-w-md z-10 animate-on-scroll shadow-2xl">
+          <div class="flex items-center space-x-3 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search city or region..." class="w-full bg-transparent text-lg focus:outline-none">
+          </div>
+          <button id="closeSearch" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-4">
+            Cancel
+          </button>
+          <div id="searchResults" class="search-dropdown space-y-2">
+            <!-- Search results will be populated here -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- Main Weather Display -->
+      <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-on-scroll">
+        
+        <!-- Current Weather Card -->
+        <div class="lg:col-span-1 space-y-6">
+          <div class="glass-card border rounded-3xl p-8 text-center relative overflow-hidden">
+            <div id="weatherConditionIcon" class="mx-auto mb-4 animate-on-scroll"></div>
+            <h2 id="currentTemp" class="text-8xl md:text-9xl font-bold text-white mb-2 tracking-tighter">--°</h2>
+            <p id="weatherCondition" class="text-xl md:text-2xl text-white/90 capitalize">--</p>
+            <p id="locationName" class="text-lg text-white/70 mt-2">--</p>
+            
+            <div class="mt-6 grid grid-cols-2 gap-4">
+              <div class="glass-card rounded-xl p-3">
+                <p class="text-white/60 text-sm">Feels Like</p>
+                <p id="feelsLike" class="text-white text-xl font-semibold">--°</p>
+              </div>
+              <div class="glass-card rounded-xl p-3">
+                <p class="text-white/60 text-sm">Humidity</p>
+                <p id="humidity" class="text-white text-xl font-semibold">--%</p>
+              </div>
+              <div class="glass-card rounded-xl p-3">
+                <p class="text-white/60 text-sm">Wind</p>
+                <p id="windSpeed" class="text-white text-xl font-semibold">-- km/h</p>
+              </div>
+              <div class="glass-card rounded-xl p-3">
+                <p class="text-white/60 text-sm">UV Index</p>
+                <p id="uvIndex" class="text-white text-xl font-semibold">--</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sunrise/Sunset Card -->
+          <div class="glass-card border rounded-3xl p-6 animate-on-scroll" style="animation-delay: 0.1s">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Daylight</h3>
+            <div class="space-y-4">
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span class="text-gray-600 dark:text-gray-300">Sunrise</span>
+                </div>
+                <p id="sunrise" class="text-gray-900 dark:text-white font-medium">--:--</p>
+              </div>
+              <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-gray-600 dark:text-gray-300">Sunset</span>
+                </div>
+                <p id="sunset" class="text-gray-900 dark:text-white font-medium">--:--</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Hourly Forecast -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Hourly Forecast -->
+          <div class="glass-card border rounded-3xl p-6 animate-on-scroll" style="animation-delay: 0.2s">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Hourly Forecast</h3>
+              <button id="viewHourlyFull" class="text-[#007AFF] hover:text-blue-600 text-sm font-medium">
+                View Full →
+              </button>
+            </div>
+            <div id="hourlyForecast" class="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide">
+              <!-- Hourly forecast items will be populated here -->
+            </div>
+          </div>
+          
+          <!-- 7-Day Forecast -->
+          <div class="glass-card border rounded-3xl p-6 animate-on-scroll" style="animation-delay: 0.3s">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">7-Day Forecast</h3>
+              <button id="viewDailyFull" class="text-[#007AFF] hover:text-blue-600 text-sm font-medium">
+                View Full →
+              </button>
+            </div>
+            <div id="dailyForecast" class="space-y-3">
+              <!-- Daily forecast items will be populated here -->
+            </div>
+          </div>
+          
+          <!-- Weather Details Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 animate-on-scroll" style="animation-delay: 0.4s">
+            <div class="glass-card border rounded-3xl p-5">
+              <div class="flex items-center space-x-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#34C759]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                <span class="text-gray-600 dark:text-gray-300 text-sm">Air Quality</span>
+              </div>
+              <p id="airQuality" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+              <p id="airQualityLabel" class="text-xs text-gray-500 mt-1">--</p>
+            </div>
+            
+            <div class="glass-card border rounded-3xl p-5">
+              <div class="flex items-center space-x-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#FF9500]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span class="text-gray-600 dark:text-gray-300 text-sm">Visibility</span>
+              </div>
+              <p id="visibility" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+              <p class="text-xs text-gray-500 mt-1">km</p>
+            </div>
+            
+            <div class="glass-card border rounded-3xl p-5">
+              <div class="flex items-center space-x-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#FFCC00]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="text-gray-600 dark:text-gray-300 text-sm">Pressure</span>
+              </div>
+              <p id="pressure" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+              <p class="text-xs text-gray-500 mt-1">hPa</p>
+            </div>
+            
+            <div class="glass-card border rounded-3xl p-5">
+              <div class="flex items-center space-x-2 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                </svg>
+                <span class="text-gray-600 dark:text-gray-300 text-sm">Chance of Rain</span>
+              </div>
+              <p id="chanceOfRain" class="text-2xl font-bold text-gray-900 dark:text-white">--%</p>
+              <p class="text-xs text-gray-500 mt-1">Precipitation</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  
+  <!-- Weather Icons Template (Hidden) -->
+  <template id="weatherIcons">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white animate-on-scroll">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+    </svg>
+  </template>
+  
+  <!-- Motion.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/motion-ui/2.0.4/motion-ui.min.js"></script>
+  
+  <!-- App Script -->
+  <script src="src/app.js" defer></script>
+</body>
+</html>
