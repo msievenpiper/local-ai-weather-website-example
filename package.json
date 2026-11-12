@@ -4,7 +4,7 @@
   "description": "A weather app built for Apple devices with location services, Tailwind CSS and motion.js",
   "main": "index.html",
   "scripts": {
-    "dev": "concurrently \"npx tailwindcss -i ./src/styles.css -o ./dist/style.css --watch\" \"npx http-server dist -p 8080\"",
+    "dev": "concurrently \"npx tailwindcss -i ./src/styles.css -o ./dist/style.css --watch --poll\" \"npx http-server dist -p 8080 --open\"",
     "build": "npx tailwindcss -i ./src/styles.css -o ./dist/style.css --minify",
     "start": "npx http-server dist -p 8080"
   },
