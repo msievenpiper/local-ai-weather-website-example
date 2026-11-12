@@ -3,9 +3,6 @@
  * Built for Apple devices with location services, Tailwind CSS and motion.js
  */
 
-// Check if we're in test mode BEFORE the IIFE runs
-const isTestEnvironment = typeof jest !== 'undefined';
-
 (function() {
   'use strict';
 
@@ -78,12 +75,6 @@ const isTestEnvironment = typeof jest !== 'undefined';
     locationName: document.getElementById('locationName'),
     currentLocationText: document.getElementById('currentLocation'),
     weatherConditionIcon: document.getElementById('weatherConditionIcon'),
-    currentTime: document.getElementById('currentTime'),
-    localDate: document.getElementById('localDate'),
-    localTimezone: document.getElementById('localTimezone'),
-    windDirectionIndicator: document.getElementById('windDirectionIndicator'),
-    windDirectionArrow: document.getElementById('windDirectionArrow'),
-    windDirectionText: document.getElementById('windDirectionText'),
     feelsLike: document.getElementById('feelsLike'),
     humidity: document.getElementById('humidity'),
     windSpeed: document.getElementById('windSpeed'),
@@ -157,15 +148,13 @@ const isTestEnvironment = typeof jest !== 'undefined';
   // Initialize the application
   function init() {
     // Skip initialization in test mode or if DOM elements don't exist
-    const isTestMode = typeof jest !== 'undefined';
+    const isTestMode = global.jest?.isTest || typeof jest !== 'undefined' || process.env.NODE_ENV === 'test';
     
     if (isTestMode) {
-      // Don't try to access DOM elements in tests
       return;
     }
     
     if (!elements.app) {
-      // DOM not ready or running in test environment
       return;
     }
     
@@ -202,9 +191,6 @@ const isTestEnvironment = typeof jest !== 'undefined';
       CONFIG.units.temp = savedUnit;
       elements.unitBtnText.textContent = savedUnit === 'c' ? '°C' : '°F';
     }
-    
-    // Initialize local time
-    initLocalTime();
 
     // Hide loading screen after a minimum time
     setTimeout(() => {
@@ -652,9 +638,6 @@ const isTestEnvironment = typeof jest !== 'undefined';
     elements.visibility.textContent = (current.vis_km || 0).toFixed(1);
     elements.pressure.textContent = Math.round(current.pressure_mb || 0);
     elements.chanceOfRain.textContent = today.day.daily_chance_of_rain + '%';
-    
-    // Update precipitation chart
-    renderPrecipitationChart(forecast);
 
     // Update weather alerts
     updateWeatherAlerts(today);
@@ -1039,7 +1022,95 @@ const isTestEnvironment = typeof jest !== 'undefined';
     }
   }
 
-  // Expose testable functions (only in test environment or globally for testing)
+  // Weather alerts function
+  function updateWeatherAlerts(today) {
+    const container = document.getElementById('alertsList');
+    const section = document.getElementById('weatherAlerts');
+    
+    if (!container || !section) return;
+    
+    // Check for high risk conditions
+    const alerts = [];
+    
+    if (today.day.daily_chance_of_rain > 60) {
+      alerts.push({
+        type: 'rain',
+        title: 'Heavy Rain Expected',
+        description: `There's a ${today.day.daily_chance_of_rain}% chance of heavy rain today. Bring an umbrella!`,
+        severity: 'medium'
+      });
+    }
+    
+    if (today.day.maxtemp_c > 30) {
+      alerts.push({
+        type: 'heat',
+        title: 'Hot Weather',
+        description: `High temperatures expected - ${Math.round(today.day.maxtemp_c)}°C. Stay hydrated!`,
+        severity: 'high'
+      });
+    }
+    
+    if (today.day.mintemp_c < 0) {
+      alerts.push({
+        type: 'cold',
+        title: 'Freezing Temperatures',
+        description: `Cold conditions expected - low of ${Math.round(today.day.mintemp_c)}°C. Dress warmly!`,
+        severity: 'high'
+      });
+    }
+    
+    if (today.day.maxwind_kph > 40) {
+      alerts.push({
+        type: 'wind',
+        title: 'Strong Winds',
+        description: `High winds expected - up to ${Math.round(today.day.maxwind_kph)} km/h. Be cautious!`,
+        severity: 'medium'
+      });
+    }
+    
+    if (alerts.length === 0) {
+      section.classList.add('hidden');
+      return;
+    }
+    
+    container.innerHTML = '';
+    section.classList.remove('hidden');
+    
+    alerts.forEach(alert => {
+      const alertItem = document.createElement('div');
+      let bgColor, iconColor;
+      
+      switch(alert.severity) {
+        case 'high':
+          bgColor = 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500';
+          iconColor = 'text-red-500';
+          break;
+        case 'medium':
+          bgColor = 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500';
+          iconColor = 'text-yellow-500';
+          break;
+        default:
+          bgColor = 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500';
+          iconColor = 'text-blue-500';
+      }
+      
+      alertItem.className = `p-4 ${bgColor} rounded-xl mb-2`;
+      alertItem.innerHTML = `
+        <div class="flex items-start space-x-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${iconColor} flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-1">${alert.title}</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">${alert.description}</p>
+          </div>
+        </div>
+      `;
+      container.appendChild(alertItem);
+    });
+  }
+
+  // Expose public methods
   const exposedFunctions = {
     init: init,
     fetchWeatherByCity: fetchWeatherByCity,
@@ -1054,15 +1125,11 @@ const isTestEnvironment = typeof jest !== 'undefined';
     // Search history
     addToSearchHistory: addToSearchHistory,
     loadSearchHistory: loadSearchHistory,
-    renderRecentSearches: renderRecentSearches,
-    openSearch: openSearch,
-    closeSearch: closeSearch,
     
     // Temperature
     toggleTemperatureUnit: toggleTemperatureUnit,
     
     // Dark mode
-    toggleTheme: toggleTheme,
     enableDarkMode: enableDarkMode,
     disableDarkMode: disableDarkMode,
     
@@ -1072,13 +1139,6 @@ const isTestEnvironment = typeof jest !== 'undefined';
     // Weather alerts
     updateWeatherAlerts: updateWeatherAlerts,
     
-    // Local time
-    initLocalTime: initLocalTime,
-    updateLocalTime: updateLocalTime,
-    
-    // Precipitation chart
-    renderPrecipitationChart: renderPrecipitationChart,
-    
     // Notification helpers
     showError: showError,
     showSuccess: showSuccess,
@@ -1086,76 +1146,8 @@ const isTestEnvironment = typeof jest !== 'undefined';
     // Cache utility
     getFromCache: getFromCache,
     setInCache: setInCache,
-    
-    // Expose state for testing
-    state: state,
-    CONFIG: CONFIG,
   };
   
-  // Local time functions
-  function updateLocalTime() {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    
-    elements.currentTime.textContent = `${hours}:${minutes}`;
-    elements.localDate.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    elements.localTimezone.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
-  
-  // Initialize local time display
-  function initLocalTime() {
-    updateLocalTime();
-    setInterval(updateLocalTime, 60000); // Update every minute
-  }
-  
-  // Render precipitation chart
-  function renderPrecipitationChart(forecast) {
-    const container = document.querySelector('.flex.items-end.space-x-2.h-32');
-    
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // Get first 24 hours of precipitation data
-    const hourData = forecast[0].hour;
-    
-    // Map hourly data to 12-hour chunks for visualization
-    const chunks = [];
-    for (let i = 0; i < Math.min(24, hourData.length); i += 2) {
-      chunks.push(hourData.slice(i, i + 2));
-    }
-    
-    chunks.forEach(chunk => {
-      const avgChance = Math.round(chunk.reduce((sum, h) => sum + (parseInt(h.chance_of_rain) || 0), 0) / chunk.length);
-      const height = Math.min((avgChance / 100) * 100, 100);
-      
-      const bar = document.createElement('div');
-      bar.className = 'flex-1 flex flex-col items-center justify-end group relative';
-      bar.style.height = '100%';
-      
-      let color;
-      if (avgChance > 70) {
-        color = 'bg-blue-600';
-      } else if (avgChance > 40) {
-        color = 'bg-blue-400';
-      } else if (avgChance > 15) {
-        color = 'bg-blue-300';
-      } else {
-        color = 'bg-transparent';
-      }
-      
-      bar.innerHTML = `
-        <div class="${color} w-full rounded-t-sm transition-all duration-500 hover:opacity-80" style="height: ${height}%;"></div>
-        <span class="text-[10px] text-gray-500 mt-1 absolute bottom-full mb-1">${chunk[0].time.split(' ')[0].split(':')[0]}</span>
-        ${avgChance > 15 ? `<div class="bg-gray-800 text-white text-[9px] px-1.5 py-0.5 rounded absolute top-full mt-1 hidden group-hover:block z-10">${avgChance}%</div>` : ''}
-      `;
-      
-      container.appendChild(bar);
-    });
-  }
-  
-  // Expose public methods
   window.WeatherApp = {
     ...exposedFunctions,
   };
@@ -1163,5 +1155,38 @@ const isTestEnvironment = typeof jest !== 'undefined';
   // Export for testing (Node.js environment)
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = exposedFunctions;
+  }
+
+  // Cache utility functions
+  function getFromCache(key) {
+    const cached = state.cache.weatherData.get(key);
+    if (cached && Date.now() - cached.timestamp < state.cacheTTL) {
+      return cached.data;
+    }
+    return null;
+  }
+
+  function setInCache(key, data) {
+    // Clean up old cache entries if limit exceeded
+    if (state.cache.weatherData.size >= state.cache.maxCacheSize) {
+      const oldestKey = state.cache.weatherData.keys().next().value;
+      state.cache.weatherData.delete(oldestKey);
+    }
+    
+    state.cache.weatherData.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
+
+  // Initialize when DOM is ready
+  const autoInitMode = global.jest?.isTest || typeof jest !== 'undefined' || process.env.NODE_ENV === 'test';
+  
+  if (!autoInitMode) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   }
 })();
