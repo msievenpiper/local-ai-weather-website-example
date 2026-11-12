@@ -25,8 +25,22 @@
     weatherData: null,
     forecastData: null,
     searchHistory: [],
-    darkMode: false
+    darkMode: false,
+    currentGradient: null
   };
+
+  // Unit conversion functions
+  function celsiusToFahrenheit(celsius) {
+    return Math.round((celsius * 9/5) + 32);
+  }
+
+  function formatTime(date) {
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function formatDate(date) {
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  }
 
   // DOM Elements
   const elements = {
@@ -73,10 +87,10 @@
   // Initialize the application
   function init() {
     setupEventListeners();
-    checkApiKey();
     
     // Try to get location from localStorage or use default
     const savedLocation = localStorage.getItem('weatherApp:lastLocation');
+    
     if (savedLocation) {
       state.currentLocation = savedLocation;
       fetchWeatherByCity(savedLocation);
@@ -89,7 +103,19 @@
     const savedTheme = localStorage.getItem('weatherApp:theme');
     if (savedTheme === 'dark') {
       enableDarkMode();
+    } else {
+      // Check system preference
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        enableDarkMode();
+      }
     }
+
+    // Hide loading screen after a minimum time
+    setTimeout(() => {
+      if (!elements.contentContainer.classList.contains('hidden')) {
+        elements.loadingScreen.style.display = 'none';
+      }
+    }, 500);
   }
 
   // Setup event listeners
@@ -111,6 +137,8 @@
           fetchWeatherByCity(searchTerm);
           closeSearch();
         }
+      } else if (e.key === 'Escape') {
+        closeSearch();
       }
     });
 
@@ -125,6 +153,18 @@
     elements.viewDailyFull.addEventListener('click', () => {
       showNotification('View full daily forecast feature coming soon!');
     });
+  }
+
+  // Update UI for loading state
+  function showLoading() {
+    elements.loadingScreen.classList.remove('hidden');
+    elements.contentContainer.classList.add('hidden');
+  }
+
+  // Update UI for loaded state
+  function showContent() {
+    elements.loadingScreen.classList.add('hidden');
+    elements.contentContainer.classList.remove('hidden');
   }
 
   // Check if API key is set
@@ -164,6 +204,8 @@
 
   // Fetch weather by coordinates (reverse geocoding)
   async function fetchWeatherByCoordinates(latitude, longitude) {
+    showLoading();
+    
     try {
       const response = await fetch(
         `${CONFIG.weatherApi.baseUrl}/forecast.json?key=${CONFIG.weatherApi.key}&q=${latitude},${longitude}&days=7&aqi=yes&alerts=no`
@@ -200,11 +242,8 @@
 
   // Fetch weather by city name
   async function fetchWeatherByCity(city) {
-    if (!CONFIG.weatherApi.key) {
-      showNotification('Please add your WeatherAPI.com API key');
-      return;
-    }
-
+    showLoading();
+    
     try {
       const response = await fetch(
         `${CONFIG.weatherApi.baseUrl}/forecast.json?key=${CONFIG.weatherApi.key}&q=${encodeURIComponent(city)}&days=7&aqi=yes&alerts=no`
@@ -323,6 +362,9 @@
 
     // Update weather condition icon
     updateWeatherIcon(current.condition.code);
+    
+    // Set background based on weather conditions
+    setDynamicBackground(current.condition.text, current.is_day);
 
     // Update additional details
     elements.feelsLike.textContent = Math.round(current.feelslike_c) + '°';
@@ -367,8 +409,37 @@
     animateContent();
 
     // Update loading state
-    elements.loadingScreen.classList.add('hidden');
-    elements.contentContainer.classList.remove('hidden');
+    showContent();
+  }
+
+  // Set dynamic background based on weather conditions
+  function setDynamicBackground(conditionText, isDay) {
+    const condition = conditionText.toLowerCase();
+    
+    let gradient;
+    
+    if (condition.includes('sunny') || condition.includes('clear')) {
+      gradient = isDay 
+        ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+        : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+    } else if (condition.includes('cloudy') || condition.includes('overcast')) {
+      gradient = 'linear-gradient(135deg, #9fa8da 0%, #c5cae9 100%)';
+    } else if (condition.includes('rain') || condition.includes('drizzle')) {
+      gradient = 'linear-gradient(135deg, #37474f 0%, #607d8b 100%)';
+    } else if (condition.includes('thunderstorm') || condition.includes('storm')) {
+      gradient = 'linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)';
+    } else if (condition.includes('snow')) {
+      gradient = 'linear-gradient(135deg, #ece9e6 0%, #ffffff 100%)';
+    } else if (condition.includes('fog') || condition.includes('mist')) {
+      gradient = 'linear-gradient(135deg, #7f8c8d 0%, #bdc3c7 100%)';
+    } else {
+      gradient = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    }
+    
+    document.documentElement.style.setProperty('--weather-gradient', gradient);
+    
+    // Store current gradient for theme toggling
+    state.currentGradient = gradient;
   }
 
   // Update weather icon
@@ -480,15 +551,22 @@
       
       if (!hourForecast) continue;
 
+      // Highlight current or upcoming hours
+      const isCurrentHour = i === 0;
       const hourItem = document.createElement('div');
-      hourItem.className = 'flex flex-col items-center min-w-[70px] p-3 rounded-xl hover:bg-white/10 transition-colors';
+      hourItem.className = `flex flex-col items-center min-w-[70px] p-3 rounded-xl transition-all duration-300 ${isCurrentHour ? 'bg-white/20 scale-105 shadow-lg' : 'hover:bg-white/10'}`;
       hourItem.innerHTML = `
-        <span class="text-sm text-white/80 mb-2">${hourTime.getHours()}:00</span>
-        <div class="my-2">
+        <span class="text-sm font-medium text-white mb-1">${hourTime.getHours()}:00</span>
+        <div class="my-2 animate-on-scroll" style="animation-delay: ${(i + 1) * 0.05}s">
           ${getHourlyWeatherIcon(hourForecast.condition.code)}
         </div>
-        <span class="text-lg font-semibold text-white">${Math.round(hourForecast.temp_c)}°</span>
-        <span class="text-xs text-white/60 mt-1">${hourForecast.chance_of_rain}%</span>
+        <span class="text-lg font-bold text-white">${Math.round(hourForecast.temp_c)}°</span>
+        <div class="flex items-center space-x-1 mt-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+          </svg>
+          <span class="text-xs text-white/70">${hourForecast.chance_of_rain}%</span>
+        </div>
       `;
       
       elements.hourlyForecast.appendChild(hourItem);
@@ -521,19 +599,26 @@
       if (index === 0) return; // Skip today, already shown in hourly
 
       const dayName = new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' });
-      const isHighTemp = index === 1; // Highlight tomorrow
+      const dayFull = new Date(day.date).toLocaleDateString('en-US', { weekday: 'long' });
+      const isToday = index === 1; // Highlight tomorrow
 
       const dayItem = document.createElement('div');
-      dayItem.className = `flex justify-between items-center p-4 hover:bg-white/5 rounded-xl transition-colors ${isHighTemp ? 'bg-white/10' : ''}`;
+      dayItem.className = `flex flex-col sm:flex-row justify-between items-center p-4 hover:bg-white/5 rounded-xl transition-all duration-300 ${isToday ? 'bg-gradient-to-r from-white/20 to-white/10 border-l-4 border-blue-300' : ''}`;
       dayItem.innerHTML = `
-        <span class="text-gray-800 dark:text-white font-medium w-20">${dayName}</span>
-        <div class="flex items-center space-x-3">
-          ${getDailyWeatherIcon(day.day.condition.code)}
-          <span class="text-gray-600 dark:text-gray-300 text-sm hidden sm:block">${day.day.condition.text}</span>
+        <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+          <span class="text-gray-800 dark:text-white font-bold w-16">${dayName}</span>
+          <div class="hidden sm:block">
+            ${getDailyWeatherIcon(day.day.condition.code)}
+          </div>
         </div>
-        <div class="flex items-center space-x-4">
-          <span class="text-gray-900 dark:text-white font-bold text-lg">${Math.round(day.day.maxtemp_c)}°</span>
-          <span class="text-gray-500 dark:text-gray-400">${Math.round(day.day.mintemp_c)}°</span>
+        <div class="flex items-center space-x-3 mb-2 sm:mb-0">
+          <span class="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">${day.day.condition.text}</span>
+        </div>
+        <div class="flex items-center space-x-6">
+          <div class="text-right">
+            <span class="block text-gray-900 dark:text-white font-bold text-xl">${Math.round(day.day.maxtemp_c)}°</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">${Math.round(day.day.mintemp_c)}°</span>
+          </div>
         </div>
       `;
       
@@ -585,13 +670,24 @@
 
   function enableDarkMode() {
     document.body.classList.add('dark');
-    document.documentElement.style.setProperty('--weather-gradient', 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)');
+    
+    // Preserve weather gradient in dark mode
+    const baseGradient = state.currentGradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    document.documentElement.style.setProperty('--weather-gradient', baseGradient);
+    
+    // Adjust gradient for dark mode
+    document.documentElement.style.setProperty('--weather-gradient', 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)');
+    
     localStorage.setItem('weatherApp:theme', 'dark');
   }
 
   function disableDarkMode() {
     document.body.classList.remove('dark');
-    document.documentElement.style.setProperty('--weather-gradient', 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)');
+    
+    // Restore weather gradient
+    const baseGradient = state.currentGradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    document.documentElement.style.setProperty('--weather-gradient', baseGradient);
+    
     localStorage.setItem('weatherApp:theme', 'light');
   }
 

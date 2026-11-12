@@ -4,7 +4,7 @@
   "description": "A weather app built for Apple devices with location services, Tailwind CSS and motion.js",
   "main": "index.html",
   "scripts": {
-    "dev": "npx tailwindcss -i ./src/styles.css -o ./dist/style.css --watch",
+    "dev": "concurrently \"npx tailwindcss -i ./src/styles.css -o ./dist/style.css --watch\" \"npx http-server dist -p 8080\"",
     "build": "npx tailwindcss -i ./src/styles.css -o ./dist/style.css --minify",
     "start": "npx http-server dist -p 8080"
   },
@@ -16,6 +16,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "http-server": "^14.1.1",
     "tailwindcss": "^3.4.0"
   }
