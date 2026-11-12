@@ -135,6 +135,9 @@
   function init() {
     setupEventListeners();
     
+    // Load search history from localStorage
+    loadSearchHistory();
+
     // Try to get location from localStorage or use default
     const savedLocation = localStorage.getItem('weatherApp:lastLocation');
     
@@ -372,11 +375,84 @@
       `;
       
       resultItem.addEventListener('click', () => {
+        addToSearchHistory(location.name);
         fetchWeatherByCity(location.name);
         closeSearch();
       });
       
       elements.searchResults.appendChild(resultItem);
+    });
+    
+    renderRecentSearches();
+  }
+
+  // Add to search history
+  function addToSearchHistory(city) {
+    if (!city) return;
+    
+    // Remove if already exists
+    state.searchHistory = state.searchHistory.filter(item => item.toLowerCase() !== city.toLowerCase());
+    
+    // Add to beginning
+    state.searchHistory.unshift(city);
+    
+    // Keep only last 5 searches
+    if (state.searchHistory.length > 5) {
+      state.searchHistory = state.searchHistory.slice(0, 5);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('weatherApp:searchHistory', JSON.stringify(state.searchHistory));
+    
+    renderRecentSearches();
+  }
+
+  // Load search history from localStorage
+  function loadSearchHistory() {
+    const savedHistory = localStorage.getItem('weatherApp:searchHistory');
+    if (savedHistory) {
+      try {
+        state.searchHistory = JSON.parse(savedHistory);
+      } catch (error) {
+        console.error('Error loading search history:', error);
+        state.searchHistory = [];
+      }
+    }
+  }
+
+  // Render recent searches
+  function renderRecentSearches() {
+    const container = document.getElementById('recentSearchList');
+    const recentSection = document.getElementById('recentSearches');
+    
+    if (!container || !recentSection) return;
+    
+    if (state.searchHistory.length === 0) {
+      recentSection.classList.add('hidden');
+      return;
+    }
+    
+    container.innerHTML = '';
+    recentSection.classList.remove('hidden');
+    
+    state.searchHistory.forEach(city => {
+      const item = document.createElement('div');
+      item.className = 'flex justify-between items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors group cursor-pointer';
+      item.innerHTML = `
+        <div class="flex items-center space-x-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-[#007AFF] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span class="text-gray-700 dark:text-gray-200">${city}</span>
+        </div>
+      `;
+      
+      item.addEventListener('click', () => {
+        fetchWeatherByCity(city);
+        closeSearch();
+      });
+      
+      container.appendChild(item);
     });
   }
 
