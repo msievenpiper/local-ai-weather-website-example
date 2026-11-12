@@ -42,6 +42,37 @@ body {
   font-feature-settings: "ss01", "ss02", "cv01", "cv02";
 }
 
+/* Accessibility improvements */
+/* Focus styles for keyboard navigation */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #007AFF;
+  outline-offset: 4px;
+}
+
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* High contrast focus for better visibility */
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #007AFF;
+  outline-offset: 2px;
+}
+
 /* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
