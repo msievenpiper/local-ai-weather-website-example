@@ -244,7 +244,14 @@
               </div>
               <div class="glass-card rounded-xl p-3">
                 <p class="text-white/60 text-sm">Wind</p>
-                <p id="windSpeed" class="text-white text-xl font-semibold">-- km/h</p>
+                <div class="flex flex-col items-center mt-1">
+                  <div id="windDirectionIndicator" class="w-8 h-8 mb-1 relative flex items-center justify-center">
+                    <div class="absolute w-full h-full border-2 border-white/30 rounded-full"></div>
+                    <div class="absolute w-full h-0.5 bg-white/60 origin-bottom" id="windDirectionArrow"></div>
+                    <span class="absolute text-[10px] font-bold text-white/80" id="windDirectionText">--</span>
+                  </div>
+                  <p id="windSpeed" class="text-white text-xl font-semibold">-- km/h</p>
+                </div>
               </div>
               <div class="glass-card rounded-xl p-3">
                 <p class="text-white/60 text-sm">UV Index</p>
