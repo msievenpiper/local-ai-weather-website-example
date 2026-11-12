@@ -260,6 +260,18 @@
             </div>
           </div>
           
+          <!-- Local Time Card -->
+          <div class="glass-card border rounded-3xl p-6 animate-slide-in-left" style="animation-delay: 0.25s">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Local Time</h3>
+              <span id="currentTime" class="text-2xl font-bold text-[#007AFF] animate-pulse-slow">--:--</span>
+            </div>
+            <p id="localDate" class="text-gray-600 dark:text-gray-300">--</p>
+            <div class="mt-2">
+              <span id="localTimezone" class="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">--</span>
+            </div>
+          </div>
+          
           <!-- Sunrise/Sunset Card -->
           <div class="glass-card border rounded-3xl p-6 animate-slide-in-left" style="animation-delay: 0.2s">
             <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Daylight</h3>
@@ -312,6 +324,15 @@
             <div id="dailyForecast" class="space-y-3">
               <!-- Daily forecast items will be populated here -->
             </div>
+          </div>
+          
+          <!-- Precipitation Chart -->
+          <div class="glass-card border rounded-3xl p-6 animate-slide-in-right">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Precipitation</h3>
+            <div class="flex items-end space-x-2 h-32 mb-4">
+              <!-- Precipitation bars will be populated here -->
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Next 24 hours precipitation forecast</p>
           </div>
           
           <!-- Weather Alerts -->
