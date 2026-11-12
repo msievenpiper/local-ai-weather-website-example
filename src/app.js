@@ -26,7 +26,15 @@
     forecastData: null,
     searchHistory: [],
     darkMode: false,
-    currentGradient: null
+    currentGradient: null,
+    
+    // Cache management
+    cache: {
+      weatherData: new Map(),
+      searchResults: new Map()
+    },
+    cacheTTL: 5 * 60 * 1000, // 5 minutes
+    maxCacheSize: 20
   };
 
   // Unit conversion functions
@@ -253,6 +261,23 @@
 
   // Fetch weather by coordinates (reverse geocoding)
   async function fetchWeatherByCoordinates(latitude, longitude) {
+    const cacheKey = `coords:${latitude},${longitude}`;
+    
+    // Check cache first
+    const cachedData = getFromCache(cacheKey);
+    if (cachedData) {
+      state.currentLocation = cachedData.location;
+      state.weatherData = cachedData.weatherData;
+      
+      // Show loading briefly for smooth UX
+      showLoading();
+      setTimeout(() => {
+        renderWeather();
+        showContent();
+      }, 100);
+      return;
+    }
+    
     showLoading();
     
     try {
@@ -281,6 +306,12 @@
         forecast: data.forecast.forecastday
       };
 
+      // Cache the response
+      setInCache(cacheKey, {
+        location: state.currentLocation,
+        weatherData: state.weatherData
+      });
+
       renderWeather();
       
     } catch (error) {
@@ -291,6 +322,23 @@
 
   // Fetch weather by city name
   async function fetchWeatherByCity(city) {
+    const cacheKey = `city:${city.toLowerCase()}`;
+    
+    // Check cache first
+    const cachedData = getFromCache(cacheKey);
+    if (cachedData) {
+      state.currentLocation = cachedData.location;
+      state.weatherData = cachedData.weatherData;
+      
+      // Show loading briefly for smooth UX
+      showLoading();
+      setTimeout(() => {
+        renderWeather();
+        showContent();
+      }, 100);
+      return;
+    }
+    
     showLoading();
     
     try {
@@ -319,6 +367,12 @@
         forecast: data.forecast.forecastday
       };
 
+      // Cache the response
+      setInCache(cacheKey, {
+        location: state.currentLocation,
+        weatherData: state.weatherData
+      });
+
       showSuccess(`Weather updated for ${state.currentLocation.name}`);
       renderWeather();
       
@@ -342,6 +396,9 @@
     elements.searchResults.innerHTML = '';
   }
 
+  // Debounce function for search input
+  let searchTimeout = null;
+  
   async function handleSearchInput(e) {
     const query = e.target.value.trim();
     
@@ -350,26 +407,33 @@
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${CONFIG.weatherApi.baseUrl}/search.json?key=${CONFIG.weatherApi.key}&q=${encodeURIComponent(query)}`
-      );
-
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
-      const results = await response.json();
-      
-      if (results.length > 0) {
-        renderSearchResults(results);
-      } else {
-        elements.searchResults.innerHTML = '<p class="text-gray-500 p-2">No locations found</p>';
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      elements.searchResults.innerHTML = '<p class="text-gray-500 p-2">Error searching locations</p>';
+    // Debounce search requests
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
     }
+    
+    searchTimeout = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `${CONFIG.weatherApi.baseUrl}/search.json?key=${CONFIG.weatherApi.key}&q=${encodeURIComponent(query)}`
+        );
+
+        if (!response.ok) {
+          throw new Error('Search failed');
+        }
+
+        const results = await response.json();
+        
+        if (results.length > 0) {
+          renderSearchResults(results);
+        } else {
+          elements.searchResults.innerHTML = '<p class="text-gray-500 p-2">No locations found</p>';
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        elements.searchResults.innerHTML = '<p class="text-gray-500 p-2">Error searching locations</p>';
+      }
+    }, 300); // Wait 300ms after typing stops before making request
   }
 
   // Render search results
@@ -844,6 +908,28 @@
     fetchWeatherByCity: fetchWeatherByCity,
     toggleTheme: toggleTheme
   };
+
+  // Cache utility functions
+  function getFromCache(key) {
+    const cached = state.cache.weatherData.get(key);
+    if (cached && Date.now() - cached.timestamp < state.cacheTTL) {
+      return cached.data;
+    }
+    return null;
+  }
+
+  function setInCache(key, data) {
+    // Clean up old cache entries if limit exceeded
+    if (state.cache.weatherData.size >= state.cache.maxCacheSize) {
+      const oldestKey = state.cache.weatherData.keys().next().value;
+      state.cache.weatherData.delete(oldestKey);
+    }
+    
+    state.cache.weatherData.set(key, {
+      data,
+      timestamp: Date.now()
+    });
+  }
 
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
