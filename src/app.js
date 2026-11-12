@@ -84,6 +84,53 @@
     viewDailyFull: document.getElementById('viewDailyFull')
   };
 
+  // Error handling utility
+  function showError(message, duration = 3000) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-bounce-in flex items-center space-x-2 min-w-[300px] justify-center';
+    notification.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+      </svg>
+      <span class="font-medium">${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.classList.add('opacity-0', 'translate-y-4');
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, duration);
+  }
+
+  function showSuccess(message, duration = 2000) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-bounce-in flex items-center space-x-2 min-w-[300px] justify-center';
+    notification.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      </svg>
+      <span class="font-medium">${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.classList.add('opacity-0', 'translate-y-4');
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, duration);
+  }
+
   // Initialize the application
   function init() {
     setupEventListeners();
@@ -147,11 +194,11 @@
 
     // View full buttons (placeholders for future functionality)
     elements.viewHourlyFull.addEventListener('click', () => {
-      showNotification('View full hourly forecast feature coming soon!');
+      showSuccess('View full hourly forecast feature coming soon!');
     });
 
     elements.viewDailyFull.addEventListener('click', () => {
-      showNotification('View full daily forecast feature coming soon!');
+      showSuccess('View full daily forecast feature coming soon!');
     });
   }
 
@@ -167,21 +214,10 @@
     elements.contentContainer.classList.remove('hidden');
   }
 
-  // Check if API key is set
-  function checkApiKey() {
-    if (!CONFIG.weatherApi.key) {
-      console.warn('WeatherAPI.com API key not set. Please add your API key in the CONFIG object.');
-      // Show a notification to the user
-      setTimeout(() => {
-        alert('Please add your WeatherAPI.com API key in src/app.js to use real weather data.');
-      }, 1000);
-    }
-  }
-
   // Request geolocation
   function requestGeoLocation() {
     if (!navigator.geolocation) {
-      showNotification('Geolocation is not supported by your browser');
+      showError('Geolocation is not supported by your browser');
       fetchWeatherByCity(CONFIG.defaultLocation);
       return;
     }
@@ -195,7 +231,7 @@
       },
       (error) => {
         console.error('Geolocation error:', error);
-        showNotification('Unable to retrieve your location. Using default location.');
+        showError('Unable to retrieve your location. Using default location.');
         elements.locationBtn.innerHTML = elements.locationBtn.innerHTML.replace('<div class="loader w-6 h-6"></div>', '');
         fetchWeatherByCity(CONFIG.defaultLocation);
       }
@@ -236,7 +272,7 @@
       
     } catch (error) {
       console.error('Error fetching weather by coordinates:', error);
-      showNotification('Unable to fetch weather data. Please try again.');
+      showError('Unable to fetch weather data. Please try again.');
     }
   }
 
@@ -270,11 +306,12 @@
         forecast: data.forecast.forecastday
       };
 
+      showSuccess(`Weather updated for ${state.currentLocation.name}`);
       renderWeather();
       
     } catch (error) {
       console.error('Error fetching weather by city:', error);
-      showNotification('City not found. Please check the spelling.');
+      showError('City not found. Please check the spelling.');
     }
   }
 
@@ -442,6 +479,40 @@
     state.currentGradient = gradient;
   }
 
+  // Toggle dark mode
+  function toggleTheme() {
+    state.darkMode = !state.darkMode;
+    
+    if (state.darkMode) {
+      enableDarkMode();
+    } else {
+      disableDarkMode();
+    }
+  }
+
+  function enableDarkMode() {
+    document.body.classList.add('dark');
+    
+    // Preserve weather gradient in dark mode
+    const baseGradient = state.currentGradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    document.documentElement.style.setProperty('--weather-gradient', baseGradient);
+    
+    // Adjust gradient for dark mode
+    document.documentElement.style.setProperty('--weather-gradient', 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)');
+    
+    localStorage.setItem('weatherApp:theme', 'dark');
+  }
+
+  function disableDarkMode() {
+    document.body.classList.remove('dark');
+    
+    // Restore weather gradient
+    const baseGradient = state.currentGradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    document.documentElement.style.setProperty('--weather-gradient', baseGradient);
+    
+    localStorage.setItem('weatherApp:theme', 'light');
+  }
+
   // Update weather icon
   function updateWeatherIcon(conditionCode) {
     const conditionMap = {
@@ -471,11 +542,8 @@
       1368: 'heavy-showers', 1371: 'light',
       1374: 'moderate', 1377: 'heavy',
       1382: 'light-showers', 1385: 'moderate',
-      1388: 'heavy-showers', 1400: 'light-sleet',
-      1403: 'moderate', 1406: 'heavy-sleet',
-      1409: 'light-showers', 1412: 'moderate',
-      1415: 'heavy-showers', 1430: 'fog',
-      1433: 'freezing-fog'
+      1388: 'heavy-showers', 1400: 'fog',
+      1403: 'freezing-fog'
     };
 
     const weatherType = conditionMap[conditionCode] || 'cloudy';
@@ -655,57 +723,6 @@
         element.classList.add('visible');
       }, index * 100);
     });
-  }
-
-  // Toggle dark mode
-  function toggleTheme() {
-    state.darkMode = !state.darkMode;
-    
-    if (state.darkMode) {
-      enableDarkMode();
-    } else {
-      disableDarkMode();
-    }
-  }
-
-  function enableDarkMode() {
-    document.body.classList.add('dark');
-    
-    // Preserve weather gradient in dark mode
-    const baseGradient = state.currentGradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    document.documentElement.style.setProperty('--weather-gradient', baseGradient);
-    
-    // Adjust gradient for dark mode
-    document.documentElement.style.setProperty('--weather-gradient', 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)');
-    
-    localStorage.setItem('weatherApp:theme', 'dark');
-  }
-
-  function disableDarkMode() {
-    document.body.classList.remove('dark');
-    
-    // Restore weather gradient
-    const baseGradient = state.currentGradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    document.documentElement.style.setProperty('--weather-gradient', baseGradient);
-    
-    localStorage.setItem('weatherApp:theme', 'light');
-  }
-
-  // Show notification
-  function showNotification(message) {
-    const notification = document.createElement('div');
-    notification.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-bounce-in';
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.classList.add('opacity-0', 'translate-y-4');
-      
-      setTimeout(() => {
-        document.body.removeChild(notification);
-      }, 300);
-    }, 3000);
   }
 
   // Expose public methods
