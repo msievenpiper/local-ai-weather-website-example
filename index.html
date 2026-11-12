@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Weather</title>
+  <title>Weather - Real-time weather forecast</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#007AFF">
+  <meta name="description" content="A beautiful weather app built for Apple devices with location services, real-time forecasts, and dark mode support">
+  <meta name="keywords" content="weather, forecast, mobile app, apple devices, ios, weather app">
+  <meta name="author" content="Michael Sievenpiper">
+  
+  <!-- Accessibility -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="manifest" href="site.webmanifest">
@@ -162,26 +167,26 @@
       </header>
       
       <!-- Search Modal -->
-      <div id="searchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="searchBackdrop"></div>
-        <div class="glass-card rounded-3xl p-6 w-full max-w-md z-10 animate-on-scroll shadow-2xl">
+      <div id="searchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="searchModalTitle">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="searchBackdrop" aria-hidden="true"></div>
+        <div class="glass-card rounded-3xl p-6 w-full max-w-md z-10 animate-on-scroll shadow-2xl" role="document">
           <div class="flex items-center space-x-3 mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input type="text" id="searchInput" placeholder="Search city or region..." class="w-full bg-transparent text-lg focus:outline-none">
+            <input type="text" id="searchInput" placeholder="Search city or region..." class="w-full bg-transparent text-lg focus:outline-none" aria-label="Search for a city or region">
           </div>
-          <button id="closeSearch" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-4">
+          <button id="closeSearch" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-4" aria-label="Close search modal">
             Cancel
           </button>
-          <div id="searchResults" class="search-dropdown space-y-2">
+          <div id="searchResults" class="search-dropdown space-y-2" role="listbox" aria-label="Search results">
             <!-- Search results will be populated here -->
           </div>
         </div>
       </div>
       
       <!-- Recent Searches -->
-      <div id="recentSearches" class="glass-card border rounded-3xl p-6 animate-on-scroll mt-4 hidden">
+      <div id="recentSearches" class="glass-card border rounded-3xl p-6 animate-on-scroll mt-4 hidden" role="region" aria-label="Recent searches">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Recent Searches</h3>
         <div id="recentSearchList" class="space-y-2">
           <!-- Recent search items will be populated here -->
