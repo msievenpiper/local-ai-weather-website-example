@@ -160,6 +160,13 @@
       }
     }
 
+    // Initialize temperature unit from localStorage
+    const savedUnit = localStorage.getItem('weatherApp:tempUnit');
+    if (savedUnit) {
+      CONFIG.units.temp = savedUnit;
+      elements.unitBtnText.textContent = savedUnit === 'c' ? '°C' : '°F';
+    }
+
     // Hide loading screen after a minimum time
     setTimeout(() => {
       if (!elements.contentContainer.classList.contains('hidden')) {
@@ -191,6 +198,9 @@
         closeSearch();
       }
     });
+
+    // Temperature unit toggle
+    elements.unitToggle.addEventListener('click', toggleTemperatureUnit);
 
     // Theme toggle
     elements.themeToggle.addEventListener('click', toggleTheme);
@@ -456,6 +466,27 @@
     });
   }
 
+  // Toggle temperature unit
+  function toggleTemperatureUnit() {
+    const currentUnit = CONFIG.units.temp;
+    const newUnit = currentUnit === 'c' ? 'f' : 'c';
+    
+    CONFIG.units.temp = newUnit;
+    
+    // Update button text
+    elements.unitBtnText.textContent = newUnit === 'c' ? '°C' : '°F';
+    
+    // Save preference
+    localStorage.setItem('weatherApp:tempUnit', newUnit);
+    
+    // Refresh weather display with new units
+    if (state.weatherData) {
+      renderWeather();
+    }
+    
+    showSuccess(`Temperature unit switched to ${newUnit === 'c' ? 'Celsius (°C)' : 'Fahrenheit (°F)'}`);
+  }
+
   // Render weather data
   function renderWeather() {
     if (!state.weatherData) return;
@@ -464,7 +495,10 @@
     const today = forecast[0];
     
     // Update main weather display
-    elements.currentTemp.textContent = Math.round(current.temp_c) + '°';
+    const tempDisplay = CONFIG.units.temp === 'f' 
+      ? Math.round(current.temp_f) + '°F'
+      : Math.round(current.temp_c) + '°C';
+    elements.currentTemp.textContent = tempDisplay;
     elements.weatherCondition.textContent = current.condition.text;
     
     // Update location
@@ -480,7 +514,10 @@
     setDynamicBackground(current.condition.text, current.is_day);
 
     // Update additional details
-    elements.feelsLike.textContent = Math.round(current.feelslike_c) + '°';
+    const feelsLikeDisplay = CONFIG.units.temp === 'f'
+      ? Math.round(current.feelslike_f) + '°F'
+      : Math.round(current.feelslike_c) + '°C';
+    elements.feelsLike.textContent = feelsLikeDisplay;
     elements.humidity.textContent = current.humidity + '%';
     elements.windSpeed.textContent = Math.round(current.wind_kph) + ' km/h';
     elements.uvIndex.textContent = current.uv;
@@ -704,7 +741,7 @@
         <div class="my-2 animate-on-scroll" style="animation-delay: ${(i + 1) * 0.05}s">
           ${getHourlyWeatherIcon(hourForecast.condition.code)}
         </div>
-        <span class="text-lg font-bold text-white">${Math.round(hourForecast.temp_c)}°</span>
+        <span class="text-lg font-bold text-white">${CONFIG.units.temp === 'f' ? Math.round(hourForecast.temp_f) : Math.round(hourForecast.temp_c)}°${CONFIG.units.temp.toUpperCase()}</span>
         <div class="flex items-center space-x-1 mt-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
@@ -760,8 +797,8 @@
         </div>
         <div class="flex items-center space-x-6">
           <div class="text-right">
-            <span class="block text-gray-900 dark:text-white font-bold text-xl">${Math.round(day.day.maxtemp_c)}°</span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">${Math.round(day.day.mintemp_c)}°</span>
+            <span class="block text-gray-900 dark:text-white font-bold text-xl">${CONFIG.units.temp === 'f' ? Math.round(day.day.maxtemp_f) : Math.round(day.day.maxtemp_c)}°${CONFIG.units.temp.toUpperCase()}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">${CONFIG.units.temp === 'f' ? Math.round(day.day.mintemp_f) : Math.round(day.day.mintemp_c)}°${CONFIG.units.temp.toUpperCase()}</span>
           </div>
         </div>
       `;
