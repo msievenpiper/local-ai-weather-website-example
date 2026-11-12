@@ -887,18 +887,24 @@
   // Animate content using motion.js
   function animateContent() {
     // Use CSS animations defined in styles for smooth transitions
-    const animatedElements = document.querySelectorAll('.animate-on-scroll');
+    const animatedElements = document.querySelectorAll('[class*="animate-"]');
     
-    animatedElements.forEach((element, index) => {
+    // Clear previous visible class
+    animatedElements.forEach(element => {
       element.classList.remove('visible');
-      
-      // Trigger reflow
       void element.offsetWidth;
+    });
+    
+    // Add animation classes with staggered delays
+    animatedElements.forEach((element, index) => {
+      // Skip if already has visible class
+      if (element.classList.contains('visible')) return;
       
-      // Add animation class with delay
+      // Add animation class with delay based on position
+      const delay = Math.min(index * 100, 800); // Cap at 800ms
       setTimeout(() => {
         element.classList.add('visible');
-      }, index * 100);
+      }, delay);
     });
   }
 
